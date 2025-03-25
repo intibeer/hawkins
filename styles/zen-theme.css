@@ -1,0 +1,69 @@
+:root[class~="zen"] {
+  --background: #f8f5f0;
+  --foreground: #2c2c2c;
+  --card: #ffffff;
+  --card-foreground: #2c2c2c;
+  --popover: #ffffff;
+  --popover-foreground: #2c2c2c;
+  --primary: #9c6644;
+  --primary-foreground: #ffffff;
+  --secondary: #7d8c6d;
+  --secondary-foreground: #ffffff;
+  --muted: #d3cec4;
+  --muted-foreground: #6c6c6c;
+  --accent: #6d8c9e;
+  --accent-foreground: #ffffff;
+  --destructive: #a14b4b;
+  --destructive-foreground: #ffffff;
+  --border: #e0dcd4;
+  --input: #e0dcd4;
+  --ring: #9c6644;
+  --radius: 0.5rem;
+}
+
+.zen-container {
+  max-width: 65ch;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  line-height: 1.7;
+}
+
+.zen-heading {
+  font-family: var(--font-noto-serif-jp);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin-bottom: 1.5rem;
+}
+
+.zen-text {
+  font-family: var(--font-zen-maru-gothic);
+  font-weight: 400;
+  letter-spacing: 0.015em;
+}
+
+.zen-card {
+  background-color: white;
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.zen-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--shadow);
+}
+
+.zen-button {
+  background-color: var(--primary);
+  color: white;
+  font-family: var(--font-zen-maru-gothic);
+  font-weight: 500;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius);
+  transition: background-color 0.2s ease;
+}
+
+.zen-button:hover {
+  background-color: #875839;
+} 
