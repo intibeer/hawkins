@@ -189,8 +189,8 @@ export default function HawkinsConsciousnessScale() {
                 Select a consciousness level to view its description
               </p>
             )}
-          </div>
-        </div>
+                  </div>
+                </div>
 
         <div className="md:order-first order-last">
           <div className="grid grid-cols-1 gap-2">
@@ -220,8 +220,8 @@ export default function HawkinsConsciousnessScale() {
               </button>
             ))}
           </div>
-        </div>
-      </div>
+                </div>
+              </div>
 
       <div className="mt-8 p-4 bg-white/80 rounded-lg">
         <h3 className="young-serif text-lg mb-3 text-center">Consciousness Color Spectrum</h3>

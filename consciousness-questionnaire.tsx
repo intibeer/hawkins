@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react';
+import { Twitter, Facebook, Linkedin, Link, Check } from 'lucide-react';
 
 // Questionnaire sections and questions
 export const QUESTIONNAIRE_SECTIONS = {
@@ -109,6 +110,7 @@ export default function ConsciousnessQuestionnaire() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [formErrors, setFormErrors] = useState({ email: '' });
   const [formTouched, setFormTouched] = useState({ email: false });
+  const [linkCopied, setLinkCopied] = useState(false);
   const questionnaireRef = useRef(null);
 
   const sections = Object.keys(QUESTIONNAIRE_SECTIONS);
@@ -380,15 +382,79 @@ export default function ConsciousnessQuestionnaire() {
     ));
   };
 
+  // Function to handle social sharing
+  const handleShare = (platform) => {
+    const scoreText = `I scored ${finalScore} on the Hawkins Consciousness Scale! This places me at the level of "${getLevelTitle(finalScore)}". Discover your consciousness level:`;
+    const shareUrl = window.location.href;
+    
+    let shareLink = '';
+    
+    switch (platform) {
+      case 'twitter':
+        // X (formerly Twitter) supports text parameter
+        shareLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(scoreText)}&url=${encodeURIComponent(shareUrl)}`;
+        break;
+      case 'facebook':
+        // Facebook only reliably supports the URL parameter through their sharer
+        // The quote parameter sometimes works but is not officially supported
+        // We'll use the Feed Dialog for more reliable text sharing
+        shareLink = `https://www.facebook.com/dialog/feed?app_id=184683071273&link=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(scoreText)}&hashtag=%23ConsciousnessScale`;
+        break;
+      case 'linkedin':
+        // LinkedIn no longer supports customizing the text through URL parameters for security reasons
+        // We'll use the navigator.share API if available, otherwise fall back to basic sharing
+        if (navigator.share) {
+          navigator.share({
+            title: 'Hawkins Consciousness Scale',
+            text: scoreText,
+            url: shareUrl,
+          }).catch(() => {
+            // Fallback if share fails
+            window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank', 'noopener,noreferrer');
+          });
+          return;
+        } else {
+          // Basic LinkedIn sharing (URL only)
+          shareLink = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+        }
+        break;
+      case 'copy':
+        navigator.clipboard.writeText(`${scoreText} ${shareUrl}`).then(() => {
+          setLinkCopied(true);
+          setTimeout(() => setLinkCopied(false), 3000);
+        });
+        return;
+      default:
+        return;
+    }
+    
+    window.open(shareLink, '_blank', 'noopener,noreferrer');
+  };
+  
+  // Helper function to get a title for the consciousness level
+  const getLevelTitle = (score) => {
+    if (score < 50) return "Shame/Guilt";
+    if (score < 100) return "Fear/Apathy";
+    if (score < 200) return "Pride/Anger";
+    if (score < 300) return "Courage/Neutrality";
+    if (score < 400) return "Acceptance/Reason";
+    if (score < 500) return "Love/Compassion";
+    if (score < 600) return "Joy/Peace";
+    if (score < 700) return "Enlightenment";
+    return "Enlightenment";
+  };
+
+  // Add this function to check if Web Share API is available
+  const isWebShareAvailable = () => {
+    return navigator.share !== undefined;
+  };
+
   return (
     <div ref={questionnaireRef} className="max-w-3xl mx-auto">
       {!finalScore && !showEmailForm && (
         <>
           <div className="mb-8">
-            <h2 className="young-serif text-xl sm:text-2xl md:text-3xl mb-2" style={{ color: '#5d4037' }}>
-              Consciousness Self-Assessment
-            </h2>
-            <p className="poppins-light text-base" style={{ color: '#7d7d7d' }}>
+            <p className="poppins-light text-base text-center" style={{ color: '#7d7d7d' }}>
               Answer honestly based on your typical state of being, not how you wish to be.
             </p>
           </div>
@@ -626,6 +692,72 @@ export default function ConsciousnessQuestionnaire() {
           }}>
             {getLevelDescription(finalScore)}
           </p>
+          
+          {/* Social Sharing Section */}
+          <div className="mb-8">
+            <h3 className="poppins-medium text-lg mb-4 text-[#5d4037]">Share Your Results</h3>
+            
+            <div className="flex flex-wrap justify-center gap-3">
+              {isWebShareAvailable() && (
+                <button
+                  onClick={() => {
+                    navigator.share({
+                      title: 'Hawkins Consciousness Scale',
+                      text: `I scored ${finalScore} on the Hawkins Consciousness Scale! This places me at the level of "${getLevelTitle(finalScore)}". Discover your consciousness level:`,
+                      url: window.location.href,
+                    }).catch(err => console.error('Error sharing:', err));
+                  }}
+                  className="flex items-center gap-2 py-2 px-4 bg-[#5e35b1] text-white rounded-md hover:bg-[#4527a0] transition-colors"
+                  aria-label="Share using device sharing"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                  </svg>
+                  <span className="poppins-medium text-sm">Share</span>
+                </button>
+              )}
+              
+              <button
+                onClick={() => handleShare('twitter')}
+                className="flex items-center gap-2 py-2 px-4 bg-[#000000] text-white rounded-md hover:bg-[#333333] transition-colors"
+                aria-label="Share on X (formerly Twitter)"
+              >
+                <Twitter size={18} />
+                <span className="poppins-medium text-sm">X</span>
+              </button>
+              
+              <button
+                onClick={() => handleShare('facebook')}
+                className="flex items-center gap-2 py-2 px-4 bg-[#4267B2] text-white rounded-md hover:bg-[#365899] transition-colors"
+                aria-label="Share on Facebook"
+              >
+                <Facebook size={18} />
+                <span className="poppins-medium text-sm">Facebook</span>
+              </button>
+              
+              <button
+                onClick={() => handleShare('linkedin')}
+                className="flex items-center gap-2 py-2 px-4 bg-[#0077B5] text-white rounded-md hover:bg-[#006699] transition-colors"
+                aria-label="Share on LinkedIn"
+              >
+                <Linkedin size={18} />
+                <span className="poppins-medium text-sm">LinkedIn</span>
+              </button>
+              
+              <button
+                onClick={() => handleShare('copy')}
+                className="flex items-center gap-2 py-2 px-4 bg-[#6c757d] text-white rounded-md hover:bg-[#5a6268] transition-colors"
+                aria-label="Copy link to clipboard"
+              >
+                {linkCopied ? <Check size={18} /> : <Link size={18} />}
+                <span className="poppins-medium text-sm">{linkCopied ? 'Copied!' : 'Copy Link'}</span>
+              </button>
+            </div>
+          </div>
           
           <button 
             onClick={() => window.location.reload()}

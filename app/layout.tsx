@@ -7,6 +7,24 @@ export const metadata: Metadata = {
   title: 'Hawkins Consciousness Scale',
   description: 'Explore the levels of consciousness as described by Dr. David R. Hawkins',
   generator: 'v0.dev',
+  openGraph: {
+    title: 'Hawkins Consciousness Scale',
+    description: 'Discover your consciousness level based on Dr. David R. Hawkins\' scale of consciousness.',
+    images: [
+      {
+        url: '/og-image.jpg', // You'll need to create this image and place it in the public folder
+        width: 1200,
+        height: 630,
+        alt: 'Hawkins Consciousness Scale',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Hawkins Consciousness Scale',
+    description: 'Discover your consciousness level based on Dr. David R. Hawkins\' scale of consciousness.',
+    images: ['/og-image.jpg'],
+  },
 }
 
 export default function RootLayout({
