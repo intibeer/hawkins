@@ -128,94 +128,98 @@ export default function HawkinsConsciousnessScale() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-3">
-          {consciousnessLevels.map((item) => (
-            <button
-              key={item.level}
-              onClick={() => setSelectedLevel(item.level)}
-              className={`w-full text-left p-4 rounded transition-all ${
-                selectedLevel === item.level 
-                  ? `${getColorForLevel(item.level).bg} ${getColorForLevel(item.level).text} shadow-md` 
-                  : 'bg-white/80 hover:bg-white'
-              }`}
-              style={{
-                transition: 'all 0.3s ease',
-                borderRadius: '0.5rem',
-                fontFamily: 'var(--font-poppins)',
-                fontWeight: 400,
-                borderLeft: selectedLevel === item.level 
-                  ? `4px solid ${getColorForLevel(item.level).color}` 
-                  : '1px solid rgba(255,255,255,0.5)',
-              }}
-            >
-              <div className="flex justify-between items-center">
-                <span className="young-serif text-base">{item.name}</span>
-                <span className="poppins-light text-sm opacity-80">{item.level}</span>
-              </div>
-            </button>
-          ))}
+    <div className="max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 md:order-last order-first">
+          <div className="bg-white/80 p-8 rounded-lg shadow-sm min-h-[300px]"
+               style={{
+                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                 padding: '2rem',
+                 borderRadius: '0.5rem',
+                 boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)',
+                 backdropFilter: 'blur(5px)',
+                 border: '1px solid rgba(255, 255, 255, 0.5)',
+                 minHeight: '300px',
+                 display: 'flex',
+                 flexDirection: 'column',
+                 justifyContent: 'flex-start'
+               }}>
+            {selectedLevel ? (
+              <>
+                {consciousnessLevels.find(l => l.level === selectedLevel) && (
+                  <>
+                    <h2 className="young-serif text-2xl mb-4"
+                        style={{ 
+                          fontSize: '2rem', 
+                          color: getColorForLevel(selectedLevel).color,
+                          marginBottom: '1rem',
+                          borderBottom: `1px solid ${getColorForLevel(selectedLevel).color}20`,
+                          paddingBottom: '0.5rem'
+                        }}>
+                      {consciousnessLevels.find(l => l.level === selectedLevel)?.name}
+                      <span className="poppins-light ml-2 text-sm opacity-70"
+                            style={{ 
+                              marginLeft: '0.75rem',
+                              fontSize: '1rem',
+                              opacity: 0.7
+                            }}>
+                        {selectedLevel}
+                      </span>
+                    </h2>
+                    <p className="poppins-light"
+                       style={{
+                         fontSize: '1.25rem',
+                         lineHeight: 1.7,
+                         color: '#2a2a2a'
+                       }}>
+                      {consciousnessLevels.find(l => l.level === selectedLevel)?.description}
+                    </p>
+                  </>
+                )}
+              </>
+            ) : (
+              <p className="poppins-light-italic text-center"
+                 style={{
+                   textAlign: 'center',
+                   color: 'rgba(44, 44, 44, 0.6)',
+                   fontSize: '1.25rem',
+                   marginTop: 'auto',
+                   marginBottom: 'auto'
+                 }}>
+                Select a consciousness level to view its description
+              </p>
+            )}
+          </div>
         </div>
 
-        <div className="bg-white/80 p-8 rounded-lg shadow-sm min-h-[300px]"
-             style={{
-               backgroundColor: 'rgba(255, 255, 255, 0.8)',
-               padding: '2rem',
-               borderRadius: '0.5rem',
-               boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)',
-               backdropFilter: 'blur(5px)',
-               border: '1px solid rgba(255, 255, 255, 0.5)',
-               minHeight: '300px',
-               display: 'flex',
-               flexDirection: 'column',
-               justifyContent: 'flex-start'
-             }}>
-          {selectedLevel ? (
-            <>
-              {consciousnessLevels.find(l => l.level === selectedLevel) && (
-                <>
-                  <h2 className="young-serif text-2xl mb-4"
-                      style={{ 
-                        fontSize: '2rem', 
-                        color: getColorForLevel(selectedLevel).color,
-                        marginBottom: '1rem',
-                        borderBottom: `1px solid ${getColorForLevel(selectedLevel).color}20`,
-                        paddingBottom: '0.5rem'
-                      }}>
-                    {consciousnessLevels.find(l => l.level === selectedLevel)?.name}
-                    <span className="poppins-light ml-2 text-sm opacity-70"
-                          style={{ 
-                            marginLeft: '0.75rem',
-                            fontSize: '1rem',
-                            opacity: 0.7
-                          }}>
-                      {selectedLevel}
-                    </span>
-                  </h2>
-                  <p className="poppins-light"
-                     style={{
-                       fontSize: '1.25rem',
-                       lineHeight: 1.7,
-                       color: '#2a2a2a'
-                     }}>
-                    {consciousnessLevels.find(l => l.level === selectedLevel)?.description}
-                  </p>
-                </>
-              )}
-            </>
-          ) : (
-            <p className="poppins-light-italic text-center"
-               style={{
-                 textAlign: 'center',
-                 color: 'rgba(44, 44, 44, 0.6)',
-                 fontSize: '1.25rem',
-                 marginTop: 'auto',
-                 marginBottom: 'auto'
-               }}>
-              Select a consciousness level to view its description
-            </p>
-          )}
+        <div className="md:order-first order-last">
+          <div className="grid grid-cols-1 gap-2">
+            {consciousnessLevels.map((item) => (
+              <button
+                key={item.level}
+                onClick={() => setSelectedLevel(item.level)}
+                className={`w-full text-left p-4 rounded transition-all ${
+                  selectedLevel === item.level 
+                    ? `${getColorForLevel(item.level).bg} ${getColorForLevel(item.level).text} shadow-md` 
+                    : 'bg-white/80 hover:bg-white'
+                }`}
+                style={{
+                  transition: 'all 0.3s ease',
+                  borderRadius: '0.5rem',
+                  fontFamily: 'var(--font-poppins)',
+                  fontWeight: 400,
+                  borderLeft: selectedLevel === item.level 
+                    ? `4px solid ${getColorForLevel(item.level).color}` 
+                    : '1px solid rgba(255,255,255,0.5)',
+                }}
+              >
+                <div className="flex justify-between items-center">
+                  <span className="young-serif text-base">{item.name}</span>
+                  <span className="poppins-light text-sm opacity-80">{item.level}</span>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

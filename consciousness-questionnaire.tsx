@@ -1,9 +1,9 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 // Questionnaire sections and questions
-const QUESTIONNAIRE_SECTIONS = {
+export const QUESTIONNAIRE_SECTIONS = {
   CORE_EMOTIONAL_TENDENCIES: [
     "I often feel ashamed of who I am.",
     "I frequently feel like I've done something wrong or unforgivable.",
@@ -65,7 +65,7 @@ const QUESTIONNAIRE_SECTIONS = {
 };
 
 // Flag negatively correlated questions
-const NEGATIVELY_CORRELATED_QUESTIONS = new Set([
+export const NEGATIVELY_CORRELATED_QUESTIONS = new Set([
   "CORE_EMOTIONAL_TENDENCIES_0",
   "CORE_EMOTIONAL_TENDENCIES_1",
   "CORE_EMOTIONAL_TENDENCIES_2",
@@ -86,13 +86,15 @@ const NEGATIVELY_CORRELATED_QUESTIONS = new Set([
 
 // Consciousness levels mapped to their descriptions
 const CONSCIOUSNESS_LEVELS = [
-  { range: [0, 200], description: "Life is perceived as unsafe, adversarial, or hopeless. Emotions dominate awareness." },
-  { range: [200, 300], description: "Empowerment begins. Willingness and neutrality open the path of growth." },
-  { range: [300, 400], description: "Acceptance, rationality, and maturity emerge. Life becomes meaningful." },
-  { range: [400, 500], description: "Intellectual understanding gives way to unconditional love and compassion." },
-  { range: [500, 600], description: "Transpersonal states, service, and joy." },
-  { range: [600, 700], description: "Deep inner peace, nonduality begins to dawn." },
-  { range: [700, 1000], description: "Enlightened consciousness — beyond personal identity." }
+  { range: [0, 50], description: "Life is perceived as hopeless and dominated by shame and guilt. This level is characterized by feelings of unworthiness and self-destructive patterns." },
+  { range: [50, 100], description: "Apathy, grief, and fear dominate awareness. Life feels overwhelming and unsafe. Survival anxiety and emotional pain are common experiences." },
+  { range: [100, 200], description: "Driven by desire, anger, and pride. While more energetic than lower levels, these states are still reactive and ego-dominated." },
+  { range: [200, 300], description: "The threshold to empowerment. Courage, neutrality, and willingness open the path to growth and taking responsibility for one's life." },
+  { range: [300, 400], description: "Acceptance, reason, and understanding emerge. Life becomes meaningful, balanced, and manageable." },
+  { range: [400, 500], description: "Intellectual understanding gives way to love and compassion. The heart opens and intuition begins to guide actions." },
+  { range: [500, 600], description: "Joy, peace, and reverence for life. Transpersonal awareness and service to others become natural expressions." },
+  { range: [600, 700], description: "Deep inner peace and nonduality. The world is experienced as perfect and complete as it is." },
+  { range: [700, 1000], description: "Enlightened consciousness — beyond personal identity. Pure awareness and unity with all existence." }
 ];
 
 export default function ConsciousnessQuestionnaire() {
@@ -119,11 +121,44 @@ export default function ConsciousnessQuestionnaire() {
     const adjustedTotal = rawScores.reduce((sum, val) => sum + val, 0);
     const maxPossible = rawScores.length * 5;
 
+    // Calculate normalized score (0-1)
     const normalized = adjustedTotal / maxPossible;
-    const logScaled = Math.pow(normalized, 2.5);
-    const estimatedLevel = Math.round(200 + logScaled * 800);
-
-    setFinalScore(estimatedLevel);
+    
+    // Apply population distribution skew
+    // This function will make higher consciousness levels increasingly rare
+    // but with half the weighting of the original skew
+    const applyPopulationSkew = (normalizedScore) => {
+      // Base calculation with reduced power function (less extreme curve)
+      const baseScore = Math.pow(normalizedScore, 2.0); // Reduced from 2.5
+      
+      // Apply additional skew to match population distribution, but less extreme
+      if (normalizedScore < 0.4) {
+        // Lower consciousness (more common)
+        return 20 + (baseScore * 180 + normalizedScore * 180) / 2; // Range ~20-200
+      } else if (normalizedScore < 0.7) {
+        // Middle consciousness (less common)
+        const linearScore = 200 + (normalizedScore - 0.4) * 500;
+        const curvedScore = 200 + Math.pow(normalizedScore - 0.4, 1.1) * 300; // Reduced from 1.2
+        return (linearScore + curvedScore) / 2; // Range ~200-400
+      } else if (normalizedScore < 0.9) {
+        // Higher consciousness (rare)
+        const linearScore = 400 + (normalizedScore - 0.7) * 1000;
+        const curvedScore = 400 + Math.pow(normalizedScore - 0.7, 1.25) * 200; // Reduced from 1.5
+        return (linearScore + curvedScore) / 2; // Range ~400-600
+      } else {
+        // Highest consciousness (extremely rare)
+        const linearScore = 600 + (normalizedScore - 0.9) * 1000;
+        const curvedScore = 600 + Math.pow(normalizedScore - 0.9, 1.5) * 100; // Reduced from 2.0
+        return (linearScore + curvedScore) / 2; // Range ~600-700
+      }
+    };
+    
+    const estimatedLevel = Math.round(applyPopulationSkew(normalized));
+    
+    // Cap at 700 (enlightenment)
+    const finalLevel = Math.min(700, estimatedLevel);
+    
+    setFinalScore(finalLevel);
   };
 
   const getLevelDescription = (score) => {
@@ -151,25 +186,27 @@ export default function ConsciousnessQuestionnaire() {
 
   const renderQuestions = () => {
     return currentQuestions.map((question, index) => (
-      <div key={index} className="mb-6">
-        <p className="poppins-light" style={{ 
+      <div key={index} className="mb-8">
+        <p className="poppins-light mb-4" style={{ 
           fontSize: '1.1rem',
           lineHeight: 1.5,
-          marginBottom: '0.75rem',
           color: '#2a2a2a'
-        }}>{question}</p>
-        <div className="flex space-x-3 justify-center">
+        }}>
+          {question}
+        </p>
+        
+        <div className="flex flex-wrap justify-between gap-2">
           {[1, 2, 3, 4, 5].map(val => (
             <button
               key={val}
               onClick={() => handleResponse(index, val)}
+              className="flex-1 min-w-[60px] py-3 transition-all"
               style={{
-                width: '40px',
-                height: '40px',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: '50%',
+                borderRadius: '0.5rem',
                 transition: 'all 0.3s ease',
                 backgroundColor: responses[`${sections[currentSection]}_${index}`] === val 
                   ? '#9c6644' 
@@ -189,12 +226,13 @@ export default function ConsciousnessQuestionnaire() {
               }}
             >
               {val}
+              <span className="text-xs mt-1 opacity-80">
+                {val === 1 ? 'Disagree' : 
+                 val === 3 ? 'Neutral' : 
+                 val === 5 ? 'Agree' : ''}
+              </span>
             </button>
           ))}
-        </div>
-        <div className="flex justify-between text-xs mt-1 px-2" style={{ color: 'rgba(93, 64, 55, 0.6)' }}>
-          <span>Strongly Disagree</span>
-          <span>Strongly Agree</span>
         </div>
       </div>
     ));
@@ -209,24 +247,13 @@ export default function ConsciousnessQuestionnaire() {
       }}>
         {finalScore === null ? (
           <>
-            <h2 className="young-serif" style={{ 
-              fontSize: '1.5rem',
+            <h2 className="young-serif text-xl sm:text-2xl text-center" style={{ 
               color: '#5d4037',
-              textAlign: 'center',
               marginBottom: '2rem',
               position: 'relative',
               paddingBottom: '0.75rem'
             }}>
               {sections[currentSection].replace(/_/g, ' ')}
-              <span style={{
-                position: 'absolute',
-                bottom: 0,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '60px',
-                height: '2px',
-                background: 'linear-gradient(90deg, transparent, #9c6644, transparent)'
-              }}></span>
             </h2>
             
             <p style={{ 
@@ -244,29 +271,39 @@ export default function ConsciousnessQuestionnaire() {
               {renderQuestions()}
             </div>
             
-            <div className="flex justify-between mt-8">
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-8 gap-4">
               {currentSection > 0 && (
                 <button 
-                  onClick={() => setCurrentSection(prev => prev - 1)}
+                  onClick={() => {
+                    setCurrentSection(prev => prev - 1);
+                  }}
                   style={{
                     backgroundColor: 'transparent',
                     color: '#9c6644',
-                    border: '1px solid #9c6644',
-                    padding: '0.5rem 1.25rem',
+                    padding: '0.75rem 1.5rem',
                     borderRadius: '0.5rem',
-                    fontFamily: 'var(--font-zen-maru-gothic)',
+                    border: '1px solid #9c6644',
+                    fontFamily: 'var(--font-poppins)',
                     fontSize: '0.9rem',
                     transition: 'all 0.3s ease',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    width: '100%',
+                    maxWidth: '200px'
                   }}
                 >
-                  Previous Section
+                  ← Previous Section
                 </button>
               )}
               
+              <div className="flex-1 text-center text-sm text-[#5d4037]/60 hidden sm:block">
+                Section {currentSection + 1} of {sections.length}
+              </div>
+              
               {currentSection < sections.length - 1 ? (
                 <button 
-                  onClick={() => setCurrentSection(prev => prev + 1)}
+                  onClick={() => {
+                    setCurrentSection(prev => prev + 1);
+                  }}
                   disabled={Object.keys(responses)
                     .filter(key => key.startsWith(sections[currentSection]))
                     .length !== currentQuestions.length}
@@ -275,7 +312,7 @@ export default function ConsciousnessQuestionnaire() {
                       .filter(key => key.startsWith(sections[currentSection]))
                       .length === currentQuestions.length ? '#9c6644' : 'rgba(156, 102, 68, 0.3)',
                     color: 'white',
-                    padding: '0.5rem 1.25rem',
+                    padding: '0.75rem 1.5rem',
                     borderRadius: '0.5rem',
                     fontFamily: 'var(--font-zen-maru-gothic)',
                     fontSize: '0.9rem',
@@ -283,10 +320,11 @@ export default function ConsciousnessQuestionnaire() {
                     cursor: Object.keys(responses)
                       .filter(key => key.startsWith(sections[currentSection]))
                       .length === currentQuestions.length ? 'pointer' : 'not-allowed',
-                    marginLeft: 'auto'
+                    width: '100%',
+                    maxWidth: '200px'
                   }}
                 >
-                  Next Section
+                  Next Section →
                 </button>
               ) : (
                 <button 
@@ -299,7 +337,7 @@ export default function ConsciousnessQuestionnaire() {
                       .filter(key => key.startsWith(sections[currentSection]))
                       .length === currentQuestions.length ? '#9c6644' : 'rgba(156, 102, 68, 0.3)',
                     color: 'white',
-                    padding: '0.5rem 1.25rem',
+                    padding: '0.75rem 1.5rem',
                     borderRadius: '0.5rem',
                     fontFamily: 'var(--font-young-serif)',
                     fontSize: '0.9rem',
@@ -307,18 +345,23 @@ export default function ConsciousnessQuestionnaire() {
                     cursor: Object.keys(responses)
                       .filter(key => key.startsWith(sections[currentSection]))
                       .length === currentQuestions.length ? 'pointer' : 'not-allowed',
-                    marginLeft: 'auto'
+                    width: '100%',
+                    maxWidth: '200px'
                   }}
                 >
-                  Calculate Consciousness Level
+                  Calculate Score →
                 </button>
               )}
+            </div>
+
+            {/* Add section progress indicator for mobile */}
+            <div className="text-center text-sm text-[#5d4037]/60 mt-4 sm:hidden">
+              Section {currentSection + 1} of {sections.length}
             </div>
           </>
         ) : (
           <div className="text-center">
-            <h2 className="young-serif" style={{ 
-              fontSize: '2rem',
+            <h2 className="young-serif text-xl sm:text-2xl md:text-3xl" style={{ 
               color: '#5d4037',
               marginBottom: '2rem'
             }}>
@@ -326,7 +369,7 @@ export default function ConsciousnessQuestionnaire() {
             </h2>
             
             <div className="young-serif" style={{
-              fontSize: '5rem',
+              fontSize: 'clamp(3rem, 10vw, 5rem)',
               color: getColorForLevel(finalScore),
               marginBottom: '1.5rem',
               position: 'relative',
@@ -345,8 +388,7 @@ export default function ConsciousnessQuestionnaire() {
               }}></div>
             </div>
             
-            <p className="poppins-light" style={{ 
-              fontSize: '1.4rem',
+            <p className="poppins-light text-base sm:text-lg md:text-xl" style={{ 
               lineHeight: 1.7,
               color: '#2a2a2a',
               maxWidth: '600px',

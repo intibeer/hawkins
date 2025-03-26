@@ -6,7 +6,7 @@ import ConsciousnessQuestionnaire from "../consciousness-questionnaire";
 import Disclaimer from "@/components/disclaimer";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState("scale"); // "scale" or "questionnaire"
+  const [activeTab, setActiveTab] = useState("questionnaire");
   
   return (
     <>
@@ -14,11 +14,11 @@ export default function Home() {
       <div className="min-h-screen py-10 px-4 bg-[#f8f7f2]">
         <div className="zen-container pt-8">
           <header className="mb-12 text-center">
-            <h1 className="prata-regular text-4xl md:text-5xl mb-6">
+            <h1 className="prata-regular text-3xl md:text-4xl lg:text-5xl mb-6">
               Hawkins Consciousness Scale
             </h1>
             
-            <p className="poppins-light text-lg md:text-xl max-w-2xl mx-auto text-[#5d4037]/80">
+            <p className="poppins-light text-base md:text-lg max-w-2xl mx-auto text-[#5d4037]/80">
               Explore the levels of consciousness as described by Dr. David R. Hawkins.
               This scale maps human consciousness from lower states of fear and anger
               to higher states of peace and enlightenment.
@@ -26,21 +26,21 @@ export default function Home() {
           </header>
           
           <div className="flex justify-center mb-8">
-            <div className="inline-flex rounded-md overflow-hidden" style={{ border: '1px solid rgba(156, 102, 68, 0.2)' }}>
+            <div className="inline-flex rounded-md overflow-hidden w-full max-w-md" 
+                 style={{ border: '1px solid rgba(156, 102, 68, 0.2)' }}>
               <button
                 onClick={() => setActiveTab("scale")}
-                className={`px-6 py-3 poppins-medium text-sm transition-all`}
+                className="flex-1 py-3 px-4 text-center transition-all"
                 style={{
                   backgroundColor: activeTab === "scale" ? 'rgba(156, 102, 68, 0.1)' : 'transparent',
                   color: activeTab === "scale" ? '#5d4037' : 'rgba(93, 64, 55, 0.6)',
-                  borderRight: '1px solid rgba(156, 102, 68, 0.2)'
                 }}
               >
-                Consciousness Scale
+                View Scale
               </button>
               <button
                 onClick={() => setActiveTab("questionnaire")}
-                className={`px-6 py-3 poppins-medium text-sm transition-all`}
+                className="flex-1 py-3 px-4 text-center transition-all"
                 style={{
                   backgroundColor: activeTab === "questionnaire" ? 'rgba(156, 102, 68, 0.1)' : 'transparent',
                   color: activeTab === "questionnaire" ? '#5d4037' : 'rgba(93, 64, 55, 0.6)',
