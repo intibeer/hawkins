@@ -100,10 +100,33 @@ const CONSCIOUSNESS_LEVELS = [
 export default function ConsciousnessQuestionnaire() {
   const [currentSection, setCurrentSection] = useState(0);
   const [responses, setResponses] = useState({});
+  const [calculatedScore, setCalculatedScore] = useState(null);
   const [finalScore, setFinalScore] = useState(null);
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [userInfo, setUserInfo] = useState({ name: '', email: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [formErrors, setFormErrors] = useState({ email: '' });
+  const [formTouched, setFormTouched] = useState({ email: false });
+  const questionnaireRef = useRef(null);
 
   const sections = Object.keys(QUESTIONNAIRE_SECTIONS);
   const currentQuestions = QUESTIONNAIRE_SECTIONS[sections[currentSection]];
+
+  // Calculate progress percentage
+  const progressPercentage = ((currentSection + 1) / sections.length) * 100;
+
+  // Add effect to scroll to top when section changes
+  useEffect(() => {
+    if (questionnaireRef.current) {
+      // Smooth scroll to the top of the questionnaire
+      questionnaireRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }, [currentSection]);
 
   const handleResponse = (questionIndex, value) => {
     setResponses(prev => ({
@@ -125,87 +148,206 @@ export default function ConsciousnessQuestionnaire() {
     const normalized = adjustedTotal / maxPossible;
     
     // Apply population distribution skew
-    // This function will make higher consciousness levels increasingly rare
-    // but with half the weighting of the original skew
     const applyPopulationSkew = (normalizedScore) => {
       // Base calculation with reduced power function (less extreme curve)
-      const baseScore = Math.pow(normalizedScore, 2.0); // Reduced from 2.5
+      const baseScore = Math.pow(normalizedScore, 2.0);
       
       // Apply additional skew to match population distribution, but less extreme
       if (normalizedScore < 0.4) {
-        // Lower consciousness (more common)
-        return 20 + (baseScore * 180 + normalizedScore * 180) / 2; // Range ~20-200
+        return 20 + (baseScore * 180 + normalizedScore * 180) / 2;
       } else if (normalizedScore < 0.7) {
-        // Middle consciousness (less common)
         const linearScore = 200 + (normalizedScore - 0.4) * 500;
-        const curvedScore = 200 + Math.pow(normalizedScore - 0.4, 1.1) * 300; // Reduced from 1.2
-        return (linearScore + curvedScore) / 2; // Range ~200-400
+        const curvedScore = 200 + Math.pow(normalizedScore - 0.4, 1.1) * 300;
+        return (linearScore + curvedScore) / 2;
       } else if (normalizedScore < 0.9) {
-        // Higher consciousness (rare)
         const linearScore = 400 + (normalizedScore - 0.7) * 1000;
-        const curvedScore = 400 + Math.pow(normalizedScore - 0.7, 1.25) * 200; // Reduced from 1.5
-        return (linearScore + curvedScore) / 2; // Range ~400-600
+        const curvedScore = 400 + Math.pow(normalizedScore - 0.7, 1.25) * 200;
+        return (linearScore + curvedScore) / 2;
       } else {
-        // Highest consciousness (extremely rare)
         const linearScore = 600 + (normalizedScore - 0.9) * 1000;
-        const curvedScore = 600 + Math.pow(normalizedScore - 0.9, 1.5) * 100; // Reduced from 2.0
-        return (linearScore + curvedScore) / 2; // Range ~600-700
+        const curvedScore = 600 + Math.pow(normalizedScore - 0.9, 1.5) * 100;
+        return (linearScore + curvedScore) / 2;
       }
     };
     
     const estimatedLevel = Math.round(applyPopulationSkew(normalized));
-    
-    // Cap at 700 (enlightenment)
     const finalLevel = Math.min(700, estimatedLevel);
     
-    setFinalScore(finalLevel);
+    setCalculatedScore(finalLevel);
+    setShowEmailForm(true);
   };
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setUserInfo(prev => ({ ...prev, [name]: value }));
+    
+    // Mark field as touched
+    if (!formTouched[name]) {
+      setFormTouched(prev => ({ ...prev, [name]: true }));
+    }
+    
+    // Validate email
+    if (name === 'email') {
+      if (!value.trim()) {
+        setFormErrors(prev => ({ ...prev, email: 'Email is required' }));
+      } else if (!validateEmail(value)) {
+        setFormErrors(prev => ({ ...prev, email: 'Please enter a valid email address' }));
+      } else {
+        setFormErrors(prev => ({ ...prev, email: '' }));
+      }
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setFormTouched(prev => ({ ...prev, [name]: true }));
+  };
+
+  const isFormValid = () => {
+    return validateEmail(userInfo.email) && !formErrors.email;
+  };
+
+  const handleSubmitScore = async (e) => {
+    e.preventDefault();
+    
+    // Final validation check
+    if (!validateEmail(userInfo.email)) {
+      setFormErrors(prev => ({ ...prev, email: 'Please enter a valid email address' }));
+      setFormTouched(prev => ({ ...prev, email: true }));
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setSubmitError('');
+    
+    try {
+      console.log('Submitting score:', { name: userInfo.name, email: userInfo.email, score: calculatedScore });
+      
+      // Try the App Router API route first
+      let response = await fetch('/api/submit-score', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: userInfo.name,
+          email: userInfo.email,
+          score: calculatedScore
+        }),
+      });
+      
+      // If App Router API fails, try the Pages Router API
+      if (!response.ok && response.status === 404) {
+        console.log('App Router API not found, trying Pages Router API');
+        response = await fetch('/api/submit-score', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: userInfo.name,
+            email: userInfo.email,
+            score: calculatedScore
+          }),
+        });
+      }
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('Error submitting score:', data);
+        throw new Error(data.message || 'Failed to submit score');
+      }
+      
+      console.log('Score submitted successfully:', data);
+      setSubmitSuccess(true);
+      setFinalScore(calculatedScore);
+      setShowEmailForm(false);
+      
+      // Track form submission in Google Analytics if available
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'form_submission', {
+          'event_category': 'engagement',
+          'event_label': 'consciousness_score',
+          'value': calculatedScore
+        });
+      }
+    } catch (error) {
+      console.error('Error in handleSubmitScore:', error);
+      setSubmitError(error.message || 'An error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+{/* 
+  const skipEmailCollection = () => {
+    setFinalScore(calculatedScore);
+    setShowEmailForm(false);
+    
+    // Track skip in Google Analytics if available
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'skip_email_collection', {
+        'event_category': 'engagement',
+        'event_label': 'consciousness_score',
+        'value': calculatedScore
+      });
+    }
+  };
+*/}
 
   const getLevelDescription = (score) => {
     const level = CONSCIOUSNESS_LEVELS.find(l => 
       score >= l.range[0] && score < l.range[1]
     );
-    return level ? level.description : "Unknown level";
+    return level ? level.description : "No description available for this level.";
   };
 
   const getColorForLevel = (score) => {
     // Rainbow spectrum from low to high consciousness
     if (score >= 700) return '#9c59d1'; // Violet/Purple - Enlightenment
     if (score >= 600) return '#7a59d1'; // Indigo - Peace
-    if (score >= 500) return '#5976d1'; // Blue - Love
+    if (score >= 500) return '#5976d1'; // Blue - Joy/Love
     if (score >= 400) return '#59b6d1'; // Light Blue - Reason
-    if (score >= 350) return '#59d196'; // Teal - Acceptance
+    if (score >= 350) return '#59d1a2'; // Teal - Acceptance
     if (score >= 300) return '#59d159'; // Green - Willingness
-    if (score >= 250) return '#96d159'; // Lime - Neutrality
-    if (score >= 200) return '#d1c159'; // Yellow - Courage
-    if (score >= 175) return '#d19659'; // Orange - Pride
-    if (score >= 150) return '#d17359'; // Orange-Red - Anger
-    if (score >= 100) return '#d15959'; // Red - Fear
-    return '#8c3636'; // Dark Red - Shame, Guilt, Apathy, Grief
+    if (score >= 250) return '#a2d159'; // Light Green - Neutrality
+    if (score >= 200) return '#d1c359'; // Yellow - Courage
+    if (score >= 175) return '#d19c59'; // Orange - Pride
+    if (score >= 150) return '#d17a59'; // Light Red - Anger
+    if (score >= 125) return '#d15959'; // Red - Desire
+    if (score >= 100) return '#d1597a'; // Pink - Fear
+    if (score >= 75) return '#d159a2'; // Magenta - Grief
+    if (score >= 50) return '#b659d1'; // Purple - Apathy
+    if (score >= 30) return '#9c59d1'; // Violet - Guilt
+    return '#7a59d1'; // Indigo - Shame
   };
 
   const renderQuestions = () => {
     return currentQuestions.map((question, index) => (
-      <div key={index} className="mb-8">
+      <div key={index} className="mb-8 max-w-2xl mx-auto">
         <p className="poppins-light mb-4" style={{ 
           fontSize: '1.1rem',
-          lineHeight: 1.5,
-          color: '#2a2a2a'
+          lineHeight: 1.6,
+          color: '#5d4037',
         }}>
           {question}
         </p>
         
-        <div className="flex flex-wrap justify-between gap-2">
+        <div className="flex flex-wrap justify-center gap-2">
           {[1, 2, 3, 4, 5].map(val => (
             <button
               key={val}
               onClick={() => handleResponse(index, val)}
-              className="flex-1 min-w-[60px] py-3 transition-all"
               style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
+                width: '4rem',
+                padding: '0.75rem 0',
+                margin: '0 0.25rem',
                 borderRadius: '0.5rem',
                 transition: 'all 0.3s ease',
                 backgroundColor: responses[`${sections[currentSection]}_${index}`] === val 
@@ -226,196 +368,283 @@ export default function ConsciousnessQuestionnaire() {
               }}
             >
               {val}
-              <span className="text-xs mt-1 opacity-80">
-                {val === 1 ? 'Disagree' : 
-                 val === 3 ? 'Neutral' : 
-                 val === 5 ? 'Agree' : ''}
-              </span>
             </button>
           ))}
+        </div>
+        
+        <div className="flex justify-between text-xs text-[#7d7d7d] mt-2 px-4">
+          <span>Rarely/Never</span>
+          <span>Always/Often</span>
         </div>
       </div>
     ));
   };
 
   return (
-    <div className="w-full">
-      <div className="zen-card" style={{ 
-        padding: '2.5rem',
-        maxWidth: '800px',
-        margin: '0 auto'
-      }}>
-        {finalScore === null ? (
-          <>
-            <h2 className="young-serif text-xl sm:text-2xl text-center" style={{ 
-              color: '#5d4037',
-              marginBottom: '2rem',
-              position: 'relative',
-              paddingBottom: '0.75rem'
-            }}>
-              {sections[currentSection].replace(/_/g, ' ')}
+    <div ref={questionnaireRef} className="max-w-3xl mx-auto">
+      {!finalScore && !showEmailForm && (
+        <>
+          <div className="mb-8">
+            <h2 className="young-serif text-xl sm:text-2xl md:text-3xl mb-2" style={{ color: '#5d4037' }}>
+              Consciousness Self-Assessment
             </h2>
-            
-            <p style={{ 
-              fontFamily: 'var(--font-cormorant)',
-              fontSize: '1.1rem',
-              textAlign: 'center',
-              color: 'rgba(93, 64, 55, 0.8)',
-              marginBottom: '2rem',
-              fontStyle: 'italic'
-            }}>
-              Rate each statement from 1 (Strongly Disagree) to 5 (Strongly Agree)
+            <p className="poppins-light text-base" style={{ color: '#7d7d7d' }}>
+              Answer honestly based on your typical state of being, not how you wish to be.
             </p>
-            
-            <div className="space-y-6">
-              {renderQuestions()}
-            </div>
-            
-            <div className="flex flex-col sm:flex-row justify-between items-center mt-8 gap-4">
-              {currentSection > 0 && (
-                <button 
-                  onClick={() => {
-                    setCurrentSection(prev => prev - 1);
-                  }}
-                  style={{
-                    backgroundColor: 'transparent',
-                    color: '#9c6644',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '0.5rem',
-                    border: '1px solid #9c6644',
-                    fontFamily: 'var(--font-poppins)',
-                    fontSize: '0.9rem',
-                    transition: 'all 0.3s ease',
-                    cursor: 'pointer',
-                    width: '100%',
-                    maxWidth: '200px'
-                  }}
-                >
-                  ← Previous Section
-                </button>
-              )}
-              
-              <div className="flex-1 text-center text-sm text-[#5d4037]/60 hidden sm:block">
+          </div>
+          
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="flex justify-between mb-2">
+              <span className="poppins-medium text-sm text-[#9c6644]">
                 Section {currentSection + 1} of {sections.length}
-              </div>
-              
-              {currentSection < sections.length - 1 ? (
-                <button 
-                  onClick={() => {
-                    setCurrentSection(prev => prev + 1);
-                  }}
-                  disabled={Object.keys(responses)
-                    .filter(key => key.startsWith(sections[currentSection]))
-                    .length !== currentQuestions.length}
-                  style={{
-                    backgroundColor: Object.keys(responses)
-                      .filter(key => key.startsWith(sections[currentSection]))
-                      .length === currentQuestions.length ? '#9c6644' : 'rgba(156, 102, 68, 0.3)',
-                    color: 'white',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '0.5rem',
-                    fontFamily: 'var(--font-zen-maru-gothic)',
-                    fontSize: '0.9rem',
-                    transition: 'all 0.3s ease',
-                    cursor: Object.keys(responses)
-                      .filter(key => key.startsWith(sections[currentSection]))
-                      .length === currentQuestions.length ? 'pointer' : 'not-allowed',
-                    width: '100%',
-                    maxWidth: '200px'
-                  }}
-                >
-                  Next Section →
-                </button>
-              ) : (
-                <button 
-                  onClick={calculateScore}
-                  disabled={Object.keys(responses)
-                    .filter(key => key.startsWith(sections[currentSection]))
-                    .length !== currentQuestions.length}
-                  style={{
-                    backgroundColor: Object.keys(responses)
-                      .filter(key => key.startsWith(sections[currentSection]))
-                      .length === currentQuestions.length ? '#9c6644' : 'rgba(156, 102, 68, 0.3)',
-                    color: 'white',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '0.5rem',
-                    fontFamily: 'var(--font-young-serif)',
-                    fontSize: '0.9rem',
-                    transition: 'all 0.3s ease',
-                    cursor: Object.keys(responses)
-                      .filter(key => key.startsWith(sections[currentSection]))
-                      .length === currentQuestions.length ? 'pointer' : 'not-allowed',
-                    width: '100%',
-                    maxWidth: '200px'
-                  }}
-                >
-                  Calculate Score →
-                </button>
-              )}
+              </span>
+              <span className="poppins-medium text-sm text-[#9c6644]">
+                {Math.round(progressPercentage)}% Complete
+              </span>
             </div>
-
-            {/* Add section progress indicator for mobile */}
-            <div className="text-center text-sm text-[#5d4037]/60 mt-4 sm:hidden">
-              Section {currentSection + 1} of {sections.length}
+            <div className="w-full h-2 bg-[#f0ebe5] rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-[#9c6644] transition-all duration-500 ease-out"
+                style={{ width: `${progressPercentage}%` }}
+              ></div>
             </div>
-          </>
-        ) : (
-          <div className="text-center">
-            <h2 className="young-serif text-xl sm:text-2xl md:text-3xl" style={{ 
-              color: '#5d4037',
-              marginBottom: '2rem'
-            }}>
-              Your Consciousness Level
-            </h2>
-            
-            <div className="young-serif" style={{
-              fontSize: 'clamp(3rem, 10vw, 5rem)',
-              color: getColorForLevel(finalScore),
-              marginBottom: '1.5rem',
-              position: 'relative',
-              display: 'inline-block',
-              textShadow: '0 2px 10px rgba(0,0,0,0.1)'
-            }}>
-              {finalScore}
-              <div style={{
-                position: 'absolute',
-                bottom: '-10px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '80px',
-                height: '2px',
-                background: `linear-gradient(90deg, transparent, ${getColorForLevel(finalScore)}, transparent)`
-              }}></div>
+            <div className="flex justify-between mt-2">
+              <span className="poppins-light text-xs text-[#7d7d7d]">
+                {sections[currentSection].replace(/_/g, ' ').toLowerCase()}
+              </span>
             </div>
-            
-            <p className="poppins-light text-base sm:text-lg md:text-xl" style={{ 
-              lineHeight: 1.7,
-              color: '#2a2a2a',
-              maxWidth: '600px',
-              margin: '0 auto 2.5rem'
-            }}>
-              {getLevelDescription(finalScore)}
-            </p>
-            
-            <button 
-              onClick={() => window.location.reload()}
+          </div>
+          
+          <div className="mb-6 text-center">
+            <h3 className="poppins-medium text-lg text-[#5d4037]">
+              {sections[currentSection].split('_').map(word => 
+                word.charAt(0) + word.slice(1).toLowerCase()
+              ).join(' ')}
+            </h3>
+          </div>
+          
+          <div className="mb-8">
+            {renderQuestions()}
+          </div>
+          
+          <div className="flex justify-between mt-8">
+            <button
+              onClick={() => setCurrentSection(prev => Math.max(0, prev - 1))}
+              disabled={currentSection === 0}
               style={{
-                backgroundColor: '#9c6644',
-                color: 'white',
-                padding: '0.75rem 2rem',
+                backgroundColor: currentSection === 0 ? '#f0ebe5' : 'white',
+                color: currentSection === 0 ? '#bdb9b3' : '#9c6644',
+                padding: '0.75rem 1.5rem',
                 borderRadius: '0.5rem',
-                fontFamily: 'var(--font-zen-maru-gothic)',
-                fontSize: '1rem',
+                border: '1px solid',
+                borderColor: currentSection === 0 ? '#f0ebe5' : '#9c6644',
+                fontFamily: 'var(--font-poppins)',
+                fontWeight: 500,
+                fontSize: '0.9rem',
                 transition: 'all 0.3s ease',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(156, 102, 68, 0.2)'
+                cursor: currentSection === 0 ? 'not-allowed' : 'pointer',
               }}
             >
-              Retake Questionnaire
+              Previous
             </button>
+            
+            {currentSection < sections.length - 1 ? (
+              <button
+                onClick={() => setCurrentSection(prev => prev + 1)}
+                disabled={currentQuestions.some((_, index) => !responses[`${sections[currentSection]}_${index}`])}
+                style={{
+                  backgroundColor: currentQuestions.some((_, index) => !responses[`${sections[currentSection]}_${index}`]) ? '#f0ebe5' : '#9c6644',
+                  color: 'white',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '0.5rem',
+                  fontFamily: 'var(--font-poppins)',
+                  fontWeight: 500,
+                  fontSize: '0.9rem',
+                  transition: 'all 0.3s ease',
+                  cursor: currentQuestions.some((_, index) => !responses[`${sections[currentSection]}_${index}`]) ? 'not-allowed' : 'pointer',
+                  boxShadow: currentQuestions.some((_, index) => !responses[`${sections[currentSection]}_${index}`]) ? 'none' : '0 4px 12px rgba(156, 102, 68, 0.2)',
+                }}
+              >
+                Next Section
+              </button>
+            ) : (
+              <button
+                onClick={calculateScore}
+                disabled={currentQuestions.some((_, index) => !responses[`${sections[currentSection]}_${index}`])}
+                style={{
+                  backgroundColor: currentQuestions.some((_, index) => !responses[`${sections[currentSection]}_${index}`]) ? '#f0ebe5' : '#9c6644',
+                  color: 'white',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '0.5rem',
+                  fontFamily: 'var(--font-poppins)',
+                  fontWeight: 500,
+                  fontSize: '0.9rem',
+                  transition: 'all 0.3s ease',
+                  cursor: currentQuestions.some((_, index) => !responses[`${sections[currentSection]}_${index}`]) ? 'not-allowed' : 'pointer',
+                  boxShadow: currentQuestions.some((_, index) => !responses[`${sections[currentSection]}_${index}`]) ? 'none' : '0 4px 12px rgba(156, 102, 68, 0.2)',
+                }}
+              >
+                Calculate My Score
+              </button>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
+      
+      {showEmailForm && !finalScore && (
+        <div className="text-center">
+          <h2 className="young-serif text-xl sm:text-2xl md:text-3xl mb-6" style={{ color: '#5d4037' }}>
+            Your Score is Ready!
+          </h2>
+          
+          <p className="poppins-light mb-8" style={{ 
+            fontSize: '1.1rem',
+            lineHeight: 1.6,
+            color: '#5d4037',
+            maxWidth: '500px',
+            margin: '0 auto'
+          }}>
+            Enter your email to view your consciousness level and receive additional insights.
+          </p>
+          
+          <form onSubmit={handleSubmitScore} className="max-w-md mx-auto text-left">
+            <div className="mb-6">
+              <label htmlFor="name" className="block mb-2 poppins-medium text-[#5d4037]">
+                Your Name <span className="text-[#9c6644]/60">(optional)</span>
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={userInfo.name}
+                onChange={handleInputChange}
+                className="w-full p-3 border border-[#d3cec4] rounded-md focus:outline-none focus:ring-2 focus:ring-[#9c6644]"
+                placeholder="Enter your name"
+              />
+            </div>
+            
+            <div className="mb-6">
+              <label htmlFor="email" className="block text-left mb-2 poppins-medium text-[#5d4037]">
+                Your Email Address <span className="text-[#d15959]">*</span>
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={userInfo.email}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#9c6644] ${
+                  formTouched.email && formErrors.email ? 'border-[#d15959]' : 'border-[#d3cec4]'
+                }`}
+                placeholder="Enter your email"
+                required
+              />
+              {formTouched.email && formErrors.email && (
+                <p className="mt-1 text-[#d15959] text-sm">{formErrors.email}</p>
+              )}
+            </div>
+            
+            {submitError && (
+              <div className="mb-4 p-3 bg-[#ffebee] text-[#d32f2f] rounded-md">
+                {submitError}
+              </div>
+            )}
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                type="submit"
+                disabled={isSubmitting || !isFormValid()}
+                className={`py-3 px-6 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#9c6644] focus:ring-offset-2 ${
+                  isSubmitting || !isFormValid() 
+                    ? 'bg-[#d3cec4] text-white cursor-not-allowed' 
+                    : 'bg-[#9c6644] text-white hover:bg-[#875839] cursor-pointer'
+                }`}
+              >
+                {isSubmitting ? 'Submitting...' : 'View My Results'}
+              </button>
+              
+              {/* <button
+                type="button"
+                onClick={skipEmailCollection}
+                className="py-3 px-6 border border-[#9c6644] text-[#9c6644] rounded-md hover:bg-[#f8f5f0] transition-colors focus:outline-none focus:ring-2 focus:ring-[#9c6644] focus:ring-offset-2"
+              >
+                Skip & View Results
+              </button> */}
+
+            </div>
+            
+            <p className="mt-4 text-xs text-[#7d7d7d] max-w-sm mx-auto">
+              By submitting, you agree to receive occasional insights about consciousness. 
+              We respect your privacy and will never share your information with third parties.
+            </p>
+          </form>
+        </div>
+      )}
+      
+      {finalScore && (
+        <div className="text-center">
+          <h2 className="young-serif text-xl sm:text-2xl md:text-3xl" style={{ 
+            color: '#5d4037',
+            marginBottom: '2rem'
+          }}>
+            Your Consciousness Level
+          </h2>
+          
+          <div className="young-serif" style={{
+            fontSize: 'clamp(3rem, 10vw, 5rem)',
+            color: getColorForLevel(finalScore),
+            marginBottom: '1.5rem',
+            position: 'relative',
+            display: 'inline-block',
+            textShadow: '0 2px 10px rgba(0,0,0,0.1)'
+          }}>
+            {finalScore}
+            <div style={{
+              position: 'absolute',
+              bottom: '-10px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '80px',
+              height: '2px',
+              background: `linear-gradient(90deg, transparent, ${getColorForLevel(finalScore)}, transparent)`
+            }}></div>
+          </div>
+          
+          {submitSuccess && (
+            <div className="mb-6 p-3 bg-[#e8f5e9] text-[#2e7d32] rounded-md max-w-md mx-auto">
+              Thank you for submitting your information! We've sent additional insights to your email.
+            </div>
+          )}
+          
+          <p className="poppins-light text-base sm:text-lg md:text-xl" style={{ 
+            lineHeight: 1.7,
+            color: '#2a2a2a',
+            maxWidth: '600px',
+            margin: '0 auto 2.5rem'
+          }}>
+            {getLevelDescription(finalScore)}
+          </p>
+          
+          <button 
+            onClick={() => window.location.reload()}
+            style={{
+              backgroundColor: '#9c6644',
+              color: 'white',
+              padding: '0.75rem 2rem',
+              borderRadius: '0.5rem',
+              fontFamily: 'var(--font-zen-maru-gothic)',
+              fontSize: '1rem',
+              transition: 'all 0.3s ease',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(156, 102, 68, 0.2)'
+            }}
+          >
+            Retake Questionnaire
+          </button>
+        </div>
+      )}
       
       <div style={{
         backgroundColor: 'rgba(255, 248, 225, 0.8)',
@@ -438,7 +667,6 @@ export default function ConsciousnessQuestionnaire() {
         theoretical consciousness scale and should not be considered 
         medical or psychological advice.
         </div>
-
       </div>
     </div>
   );
