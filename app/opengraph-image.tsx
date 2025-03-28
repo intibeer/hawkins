@@ -1,8 +1,10 @@
 import { ImageResponse } from 'next/og'
 
-export const runtime = 'edge'
+// Remove the runtime export as it's automatically handled
+// export const runtime = 'edge'
 
-export async function GET() {
+// Change the function name to avoid conflict with Next.js internal naming
+export default async function OGImage() {
   return new ImageResponse(
     (
       <div
