@@ -731,7 +731,7 @@ export default function ConsciousnessQuestionnaire() {
           
           {submitSuccess && (
             <div className="mb-6 p-3 bg-[#e8f5e9] text-[#2e7d32] rounded-md max-w-md mx-auto">
-              Thank you for submitting your information! We've sent additional insights to your email.
+              Thank you for submitting your information!
             </div>
           )}
           
