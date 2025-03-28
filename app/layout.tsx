@@ -2,19 +2,24 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { ThemeProvider } from "@/components/theme-provider";
 import Script from 'next/script';
+import CookieConsent from '@/components/cookie-consent';
 
 export const metadata: Metadata = {
   title: 'Hawkins Consciousness Scale',
   description: 'Explore the levels of consciousness as described by Dr. David R. Hawkins',
   generator: 'v0.dev',
+  icons: {
+    icon: '/hawkings.png',
+    apple: '/hawkings.png',
+  },
   openGraph: {
     title: 'Hawkins Consciousness Scale',
     description: 'Discover your consciousness level based on Dr. David R. Hawkins\' scale of consciousness.',
     images: [
       {
-        url: '/og-image.jpg', // You'll need to create this image and place it in the public folder
-        width: 1200,
-        height: 630,
+        url: '/hawkings.png',
+        width: 800,
+        height: 800,
         alt: 'Hawkins Consciousness Scale',
       },
     ],
@@ -23,7 +28,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Hawkins Consciousness Scale',
     description: 'Discover your consciousness level based on Dr. David R. Hawkins\' scale of consciousness.',
-    images: ['/og-image.jpg'],
+    images: ['/hawkings.png'],
   },
 }
 
@@ -41,7 +46,7 @@ export default function RootLayout({
         <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Prata&family=Young+Serif&display=swap');
 </style>
-        {/* Google Analytics */}
+        {/* Google Analytics - Modified for GDPR compliance */}
         <Script
           strategy="afterInteractive"
           src={`https://www.googletagmanager.com/gtag/js?id=G-06E454G91R`}
@@ -54,7 +59,26 @@ export default function RootLayout({
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-06E454G91R');
+              
+              // Disable GA by default until consent is given
+              window['ga-disable-G-06E454G91R'] = true;
+              
+              gtag('consent', 'default', {
+                'analytics_storage': 'denied'
+              });
+              
+              gtag('config', 'G-06E454G91R', {
+                'anonymize_ip': true,
+                'cookie_flags': 'SameSite=None;Secure'
+              });
+              
+              // Check if consent was previously given
+              if (typeof localStorage !== 'undefined' && localStorage.getItem('cookieConsent') === 'accepted') {
+                window['ga-disable-G-06E454G91R'] = false;
+                gtag('consent', 'update', {
+                  'analytics_storage': 'granted'
+                });
+              }
             `,
           }}
         />
@@ -67,6 +91,7 @@ export default function RootLayout({
           themes={["light", "dark", "zen"]}
         >
           {children}
+          <CookieConsent />
         </ThemeProvider>
       </body>
     </html>

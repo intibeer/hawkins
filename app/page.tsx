@@ -4,6 +4,8 @@ import { useState } from "react";
 import HawkinsConsciousnessScale from "../hawkins-consciousness-scale";
 import ConsciousnessQuestionnaire from "../consciousness-questionnaire";
 import Disclaimer from "@/components/disclaimer";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("questionnaire");
@@ -14,9 +16,26 @@ export default function Home() {
       <div className="min-h-screen py-10 px-4 bg-[#f8f7f2]">
         <div className="zen-container pt-8">
           <header className="mb-12 text-center">
-            <h1 className="prata-regular text-3xl md:text-4xl lg:text-5xl mb-6">
-              Hawkins Consciousness Scale
-            </h1>
+            <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-6">
+              <div className="relative w-20 h-20 md:w-24 md:h-24 order-1 overflow-hidden rounded-full shadow-lg border-2 border-[#9c6644]/10">
+                <Image 
+                  src="/hawkings.png" 
+                  alt="Dr. David R. Hawkins" 
+                  width={96} 
+                  height={96}
+                  className="object-cover"
+                  priority
+                  style={{
+                    filter: "sepia(50%) hue-rotate(320deg) brightness(0.95) contrast(1.1)",
+                  }}
+                />
+                <div className="absolute inset-0 rounded-full shadow-inner border border-white/10"></div>
+              </div>
+              
+              <h1 className="prata-regular text-3xl md:text-4xl lg:text-5xl order-2">
+                Hawkins Consciousness Scale
+              </h1>
+            </div>
             
             <p className="poppins-light text-base md:text-lg max-w-2xl mx-auto text-[#5d4037]/80">
               Explore the levels of consciousness as described by Dr. David R. Hawkins.
@@ -65,7 +84,32 @@ export default function Home() {
           </div>
           
           <footer className="text-center text-[#7d7d7d] mt-16 text-sm poppins-light">
+            <div className="flex justify-center mb-4">
+              <div className="relative w-10 h-10 overflow-hidden rounded-full border border-[#9c6644]/10 shadow-sm">
+                <Image 
+                  src="/hawkings.png" 
+                  alt="Dr. David R. Hawkins" 
+                  width={40} 
+                  height={40}
+                  className="object-cover"
+                  style={{
+                    filter: "sepia(50%) hue-rotate(320deg) brightness(0.95) contrast(1.1)",
+                  }}
+                />
+              </div>
+            </div>
             <p>Inspired by the work of Dr. David R. Hawkins</p>
+            <div className="mt-4 flex justify-center space-x-4">
+              <Link href="/privacy-policy" className="text-[#9c6644] hover:text-[#875839]">
+                Privacy Policy
+              </Link>
+              <Link href="/cookie-policy" className="text-[#9c6644] hover:text-[#875839]">
+                Cookie Policy
+              </Link>
+              <Link href="/terms-of-service" className="text-[#9c6644] hover:text-[#875839]">
+                Terms of Service
+              </Link>
+            </div>
           </footer>
         </div>
       </div>

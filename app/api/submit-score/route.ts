@@ -28,10 +28,7 @@ export async function POST(request: Request) {
             Name: name || 'Anonymous',
             Email: email,
             Score: Number(score),
-            'Submission Date': submissionDate,
             'Consent Given': true,
-            'Consent Date': submissionDate,
-            'IP Address': 'Redacted for privacy', // Best practice is not to store IP addresses
             'Data Source': 'Consciousness Questionnaire'
           }
         }
