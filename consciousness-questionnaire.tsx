@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Twitter, Facebook, Linkedin, Link, Check } from 'lucide-react';
+import { Twitter, Facebook, Linkedin, Link, Check, Info } from 'lucide-react';
 
 // Questionnaire sections and questions
 export const QUESTIONNAIRE_SECTIONS = {
@@ -111,6 +111,8 @@ export default function ConsciousnessQuestionnaire() {
   const [formErrors, setFormErrors] = useState({ email: '' });
   const [formTouched, setFormTouched] = useState({ email: false });
   const [linkCopied, setLinkCopied] = useState(false);
+  const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [showPrivacyInfo, setShowPrivacyInfo] = useState(false);
   const questionnaireRef = useRef(null);
 
   const sections = Object.keys(QUESTIONNAIRE_SECTIONS);
@@ -286,22 +288,6 @@ export default function ConsciousnessQuestionnaire() {
       setIsSubmitting(false);
     }
   };
-
-{/* 
-  const skipEmailCollection = () => {
-    setFinalScore(calculatedScore);
-    setShowEmailForm(false);
-    
-    // Track skip in Google Analytics if available
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'skip_email_collection', {
-        'event_category': 'engagement',
-        'event_label': 'consciousness_score',
-        'value': calculatedScore
-      });
-    }
-  };
-*/}
 
   const getLevelDescription = (score) => {
     const level = CONSCIOUSNESS_LEVELS.find(l => 
@@ -576,8 +562,8 @@ export default function ConsciousnessQuestionnaire() {
           
           <form onSubmit={handleSubmitScore} className="max-w-md mx-auto text-left">
             <div className="mb-6">
-              <label htmlFor="name" className="block mb-2 poppins-medium text-[#5d4037]">
-                Your Name <span className="text-[#9c6644]/60">(optional)</span>
+              <label htmlFor="name" className="block text-left mb-2 poppins-medium text-[#5d4037]">
+                Your Name (Optional)
               </label>
               <input
                 type="text"
@@ -612,6 +598,61 @@ export default function ConsciousnessQuestionnaire() {
               )}
             </div>
             
+            {/* GDPR Consent Checkbox */}
+            <div className="mb-6">
+              <div className="flex items-start">
+                <div className="flex items-center h-5">
+                  <input
+                    id="privacy-consent"
+                    type="checkbox"
+                    checked={privacyConsent}
+                    onChange={(e) => setPrivacyConsent(e.target.checked)}
+                    className="w-4 h-4 border border-[#d3cec4] rounded focus:ring-[#9c6644] text-[#9c6644]"
+                    required
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label htmlFor="privacy-consent" className="poppins-regular text-[#5d4037]">
+                    I consent to the processing of my personal data according to the <button 
+                      type="button" 
+                      onClick={() => setShowPrivacyInfo(!showPrivacyInfo)}
+                      className="text-[#9c6644] underline hover:text-[#875839] focus:outline-none inline-flex items-center"
+                    >
+                      Privacy Policy <Info size={14} className="ml-1" />
+                    </button>
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            {/* Privacy Information Panel */}
+            {showPrivacyInfo && (
+              <div className="mb-6 p-4 bg-[#f8f5f0] border border-[#d3cec4] rounded-md text-sm">
+                <h3 className="poppins-medium text-[#5d4037] mb-2">Privacy Information</h3>
+                <p className="poppins-light mb-2">
+                  We collect your email address to:
+                </p>
+                <ul className="list-disc pl-5 mb-2 poppins-light">
+                  <li>Send you your consciousness score results</li>
+                  <li>Provide additional insights related to your score</li>
+                  <li>Improve our questionnaire and services</li>
+                </ul>
+                <p className="poppins-light mb-2">
+                  Your data is stored securely and will not be shared with third parties for marketing purposes.
+                </p>
+                <p className="poppins-light mb-2">
+                  You have the right to access, correct, or delete your personal data at any time by contacting us.
+                </p>
+                <button 
+                  type="button" 
+                  onClick={() => setShowPrivacyInfo(false)}
+                  className="mt-2 text-[#9c6644] hover:text-[#875839] focus:outline-none poppins-medium"
+                >
+                  Close
+                </button>
+              </div>
+            )}
+            
             {submitError && (
               <div className="mb-4 p-3 bg-[#ffebee] text-[#d32f2f] rounded-md">
                 {submitError}
@@ -621,9 +662,9 @@ export default function ConsciousnessQuestionnaire() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 type="submit"
-                disabled={isSubmitting || !isFormValid()}
+                disabled={isSubmitting || !isFormValid() || !privacyConsent}
                 className={`py-3 px-6 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#9c6644] focus:ring-offset-2 ${
-                  isSubmitting || !isFormValid() 
+                  isSubmitting || !isFormValid() || !privacyConsent
                     ? 'bg-[#d3cec4] text-white cursor-not-allowed' 
                     : 'bg-[#9c6644] text-white hover:bg-[#875839] cursor-pointer'
                 }`}
@@ -633,17 +674,27 @@ export default function ConsciousnessQuestionnaire() {
               
               {/* <button
                 type="button"
-                onClick={skipEmailCollection}
+                onClick={() => {
+                  setFinalScore(calculatedScore);
+                  setShowEmailForm(false);
+                  
+                  // Track skip in Google Analytics if available
+                  if (typeof window !== 'undefined' && window.gtag) {
+                    window.gtag('event', 'skip_email_collection', {
+                      'event_category': 'engagement',
+                      'event_label': 'consciousness_score',
+                      'value': calculatedScore
+                    });
+                  }
+                }}
                 className="py-3 px-6 border border-[#9c6644] text-[#9c6644] rounded-md hover:bg-[#f8f5f0] transition-colors focus:outline-none focus:ring-2 focus:ring-[#9c6644] focus:ring-offset-2"
               >
                 Skip & View Results
               </button> */}
-
             </div>
             
-            <p className="mt-4 text-xs text-[#7d7d7d] max-w-sm mx-auto">
-              By submitting, you agree to receive occasional insights about consciousness. 
-              We respect your privacy and will never share your information with third parties.
+            <p className="mt-4 text-xs text-[#7d7d7d] text-center poppins-light">
+              We respect your privacy and will never spam you or share your data with third parties.
             </p>
           </form>
         </div>

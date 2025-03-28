@@ -15,19 +15,24 @@ export async function POST(request: Request) {
     const BASE_ID = 'appJLsdKawHxzgI5W'; // Replace with your actual base ID
     const TABLE_NAME = 'Consciousness Scores';
     
-    // Format date
+    // Format date for GDPR compliance (record when consent was given)
     const submissionDate = new Date().toISOString();
     
     console.log('Preparing to submit to Airtable:', { name, email, score: Number(score) });
     
-    // Prepare record for Airtable
+    // Prepare record for Airtable with GDPR fields
     const recordData = {
       records: [
         {
           fields: {
             Name: name || 'Anonymous',
             Email: email,
-            Score: Number(score), // Ensure score is a number
+            Score: Number(score),
+            'Submission Date': submissionDate,
+            'Consent Given': true,
+            'Consent Date': submissionDate,
+            'IP Address': 'Redacted for privacy', // Best practice is not to store IP addresses
+            'Data Source': 'Consciousness Questionnaire'
           }
         }
       ]
@@ -61,10 +66,10 @@ export async function POST(request: Request) {
     
     console.log('Successfully submitted to Airtable:', result);
     
+    // For GDPR compliance, don't return unnecessary personal data in the response
     return NextResponse.json({ 
       success: true, 
-      message: 'Score submitted successfully',
-      data: result
+      message: 'Score submitted successfully'
     });
   } catch (error) {
     console.error('Server error:', error);
