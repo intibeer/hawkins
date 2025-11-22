@@ -5,16 +5,17 @@ import Script from 'next/script';
 import CookieConsent from '@/components/cookie-consent';
 
 export const metadata: Metadata = {
-  title: 'Hawkins Consciousness Scale',
-  description: 'Explore the levels of consciousness as described by Dr. David R. Hawkins',
+  title: 'Hawkins Scale Test Online (Free) - Map of Consciousness Assessment',
+  description: 'Take the free Hawkins Scale Test online to discover your level of consciousness. Based on Dr. David Hawkins\' Map of Consciousness and Scale of Consciousness.',
+  keywords: ['Hawkins Scale Test', 'Map of Consciousness', 'David Hawkins Scale', 'Consciousness Test', 'Hawkins Scale of Consciousness', 'Free Consciousness Test', 'David Hawkins Consciousness Test'],
   generator: 'v0.dev',
   icons: {
     icon: '/hawkings.png',
     apple: '/hawkings.png',
   },
   openGraph: {
-    title: 'Hawkins Consciousness Scale',
-    description: 'Discover your consciousness level based on Dr. David R. Hawkins\' scale of consciousness.',
+    title: 'Hawkins Scale Test Online (Free) - Map of Consciousness Assessment',
+    description: 'Take the free Hawkins Scale Test online to discover your level of consciousness. Based on Dr. David Hawkins\' Map of Consciousness and Scale of Consciousness.',
     images: [
       {
         url: '/hawkings.png',
@@ -26,8 +27,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Hawkins Consciousness Scale',
-    description: 'Discover your consciousness level based on Dr. David R. Hawkins\' scale of consciousness.',
+    title: 'Hawkins Scale Test Online (Free) - Map of Consciousness Assessment',
+    description: 'Take the free Hawkins Scale Test online to discover your level of consciousness. Based on Dr. David Hawkins\' Map of Consciousness and Scale of Consciousness.',
     images: ['/hawkings.png'],
   },
 }
