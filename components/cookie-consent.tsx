@@ -28,13 +28,13 @@ export default function CookieConsent() {
     localStorage.setItem('cookieConsent', 'declined');
     setShowConsent(false);
     // Disable analytics tracking
-    window['ga-disable-G-06E454G91R'] = true;
+    window['ga-disable-G-DJR5EWJKQS'] = true;
   };
   
   const initializeAnalytics = () => {
     // Enable Google Analytics
     if (typeof window !== 'undefined' && window.gtag) {
-      window['ga-disable-G-06E454G91R'] = false;
+      window['ga-disable-G-DJR5EWJKQS'] = false;
     }
   };
   

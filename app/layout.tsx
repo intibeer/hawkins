@@ -50,7 +50,7 @@ export default function RootLayout({
         {/* Google Analytics - Modified for GDPR compliance */}
         <Script
           strategy="afterInteractive"
-          src={`https://www.googletagmanager.com/gtag/js?id=G-06E454G91R`}
+          src={`https://www.googletagmanager.com/gtag/js?id=G-DJR5EWJKQS`}
         />
         <Script
           id="google-analytics"
@@ -60,22 +60,22 @@ export default function RootLayout({
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              
+
               // Disable GA by default until consent is given
-              window['ga-disable-G-06E454G91R'] = true;
-              
+              window['ga-disable-G-DJR5EWJKQS'] = true;
+
               gtag('consent', 'default', {
                 'analytics_storage': 'denied'
               });
-              
-              gtag('config', 'G-06E454G91R', {
+
+              gtag('config', 'G-DJR5EWJKQS', {
                 'anonymize_ip': true,
                 'cookie_flags': 'SameSite=None;Secure'
               });
-              
+
               // Check if consent was previously given
               if (typeof localStorage !== 'undefined' && localStorage.getItem('cookieConsent') === 'accepted') {
-                window['ga-disable-G-06E454G91R'] = false;
+                window['ga-disable-G-DJR5EWJKQS'] = false;
                 gtag('consent', 'update', {
                   'analytics_storage': 'granted'
                 });
