@@ -1,3 +1,3 @@
 # hawkins
 
-https://www.hawkinsconsciousness.com/
+https://hawkinsconsciousness.com/
